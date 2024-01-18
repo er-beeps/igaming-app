@@ -8,7 +8,14 @@ use Illuminate\Http\Request;
 class AuthController extends Controller
 {
     /**
-     * login function
+     * Attempt user login with provided credentials and return a JSON response.
+     *
+     * @param \Illuminate\Http\Request $request
+     *        The HTTP request containing user login credentials (email and password).
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *         A JSON response indicating the result of the login attempt, including user data
+     *         on successful login, or an error message on failure.
      */
     public function login(Request $request){
         $credential= $request->validate([
@@ -17,27 +24,42 @@ class AuthController extends Controller
         ]);
 
         if(!auth()->attempt($credential)){
-            return response()->json(['error'=>true,'message'=>'Invalid Credentials']);
+            return response()->json(['error'=>true,'message'=>'Invalid Credentials'],7);
         }
-        // if(!auth()->user()->is_active){
-        //     auth()->logout();
-        //     return response()->json(['error'=>true,'message'=>'User is not active !']);
-        // }
+  
         $accessToken =auth()->user()->createToken('authToken')->accessToken;
+        $user = auth()->user();
 
+        $user_data=[
+            'name'=>$user->name,
+            'email'=>$user->email,
+            'profile_photo_path'=>$user->profile_photo_path
+        ];
 
-        return response()->json(['error'=>false,'access_token'=>$accessToken,'message'=>'Login Successfully.']);
+        return response()->json(['error'=>false,'data'=>$user_data,'access_token'=>$accessToken,'message'=>'Login Successfully.'],200);
     }
 
+    /**
+     * Retrieve the authenticated user's information and return a JSON response.
+     *
+     * This function checks if a user is logged in. If not, it returns an error response.
+     * Otherwise, it retrieves the authenticated user's data and returns it in a JSON response.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *         A JSON response containing either the user's data or an error message.
+     */
+    
     public function getUser(){
-        $user =NULL;
+        // Check if the user is not logged in
 
-        if(auth())
-        {
-            $user = auth()->user();
+        if (!auth()->user()) {
+            return response()->json(['error'=>true,'message'=>'User is not logged in'],404);
         }
 
-        return response()->json(['error'=>false,'user'=>$user,'message'=>'Data Fetch Successfull.']);
+        // Retrieve the authenticated user
+        $user = auth()->user();
 
+        // Return a JSON response with the user's data
+        return response()->json(['error'=>false,'user'=>$user,'message'=>'Data Fetch Successful.'],200);
     }
 }

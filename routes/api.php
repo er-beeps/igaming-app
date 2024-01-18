@@ -21,14 +21,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     Route::group(['middleware'=>'auth:api',
-                    'namespace' => 'Api\V1',],
-                    function(){
+                    'namespace' => 'Api\V1',],function(){
+
         Route::get('user',[AuthController::class,'getUser']);
     });
-    
-    
-    Route::get('login',function(){ 
-        return 'ok';
-    });
+                    
     Route::post('login',[AuthController::class,'login']);
 });
