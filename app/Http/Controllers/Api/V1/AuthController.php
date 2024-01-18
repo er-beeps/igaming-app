@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -11,20 +12,31 @@ class AuthController extends Controller
      * Attempt user login with provided credentials and return a JSON response.
      *
      * @param \Illuminate\Http\Request $request
-     *        The HTTP request containing user login credentials (email and password).
+     *        The HTTP request containing user login credentials (username and password).
      *
      * @return \Illuminate\Http\JsonResponse
      *         A JSON response indicating the result of the login attempt, including user data
      *         on successful login, or an error message on failure.
      */
     public function login(Request $request){
-        $credential= $request->validate([
-            'email'=>'required',
-            'password'=>'required'
-        ]);
+        // $credential= $request->validate([
+        //     'username'=>'required',
+        //     'password'=>'required',
+        // ]);
 
-        if(!auth()->attempt($credential)){
-            return response()->json(['error'=>true,'message'=>'Invalid Credentials'],7);
+        $validator = Validator::make($request->all(), [
+            'username' => 'required',
+            'password' => 'required',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['error' => true, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $credentials= ['username'=>$request->username,'password'=>$request->password];
+
+        if(!auth()->attempt($credentials)){
+            return response()->json(['error'=>true,'message'=>'Invalid Credentials'],401);
         }
   
         $accessToken =auth()->user()->createToken('authToken')->accessToken;
@@ -32,6 +44,7 @@ class AuthController extends Controller
 
         $user_data=[
             'name'=>$user->name,
+            'username'=>$user->username,
             'email'=>$user->email,
             'profile_photo_path'=>$user->profile_photo_path
         ];
@@ -60,6 +73,6 @@ class AuthController extends Controller
         $user = auth()->user();
 
         // Return a JSON response with the user's data
-        return response()->json(['error'=>false,'user'=>$user,'message'=>'Data Fetch Successful.'],200);
+        return response()->json(['error'=>false,'data'=>$user,'message'=>'Data Fetch Successful.'],200);
     }
 }
